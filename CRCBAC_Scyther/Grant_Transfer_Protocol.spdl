@@ -1,0 +1,56 @@
+hashfunction H;/* Secure hash function */
+secret XOR:Function;/* XOR operation */
+const Concat: Function;/*Concatenation Function */
+const Union:Function; /* Union Function*/
+const OR:Function;
+const Fresh: Function;
+const Getchild:Function;
+const Getdepth:Function;
+const sub:Function;
+const Ca,Cb,Rg1; const cxt,IDa,IDb; 
+secret SKa,SKb,resp;
+protocol GrantTransfer (RoleA,RoleB, RoleC  )
+{
+	macro Ea=XOR(Concat(IDa,resp),H(SKa));
+	macro Eb=XOR(Concat(IDb,resp),H(SKb));
+	macro R1=Getchild(Rg1);
+	macro RG2depth=Getdepth(RG1);
+	macro CR1'=Union(CR1,(R1,c'));
+	macro CRG1'=Sub(CRG1,(rg1,c'));
+    role RoleA  {
+        fresh T1:Nonce;      var T4:Nonce;
+       	macro Mb = XOR(Concat(IDb,Ca,cxt),H(SKb));
+        send_1 (RoleA,RoleB,Mb);
+	recv_4(RoleB,RoleA,XOR(Concat(IDb,resp),H(SKb)),T4);
+        claim(RoleA,Alive);claim(RoleA,Nisynch);
+        claim(RoleA,Weakagree);claim(RoleA,Niagree);
+        claim(RoleA,Commit,RoleB,resp);
+        claim(RoleA,Secret,SKa); }
+    role RoleB   {    
+        fresh T2,T4 :Nonce;     var T1, T3: Nonce;
+        recv_1(RoleA,RoleB,Mb);
+	macro Ma=XOR(Concat(IDa,Cb,cxt,T2),H(SKa));
+        send_2 (RoleB, RoleC  ,Ma,Mb);
+        recv_3( RoleC  ,RoleB,Ea,Eb,T3);
+	macro Respa=XOR(Ea,H(SKa));
+	send_4(RoleB,RoleA,Eb,T4);
+	claim(RoleB,Alive);
+        claim(RoleB,Weakagree);
+        claim(RoleB,Niagree);
+        claim(RoleB,Nisynch);
+	claim(RoleB,Commit, RoleC  ,resp);
+        claim(RoleB,Secret,SKb);   }
+   role RoleC  {
+        fresh T3:Nonce;
+        var T2:Nonce;var Ma,Mb,Pri;
+        recv_2 (RoleB, RoleC  ,Ma,Mb);
+	macro Ma'=XOR(Ma,H(SKa));
+	match(XOR(Ma',H(SKa)),Ma);
+	macro Mb'=XOR(Mb,H(SKb));
+	match(XOR(Mb',H(SKb)),Mb);
+	macro resp=Concat(OR(R1C,RG1C),Pri);
+	send_3( RoleC ,RoleB,Ea,Eb,T3);
+	claim( RoleC  ,Alive);  claim( RoleC  ,Niagree);
+        claim( RoleC  ,Weakagree);claim( RoleC  ,Secret,SKb);
+       claim( RoleC  ,Nisynch);claim( RoleC  ,Secret,SKa);    }
+}
