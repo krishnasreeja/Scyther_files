@@ -1,0 +1,41 @@
+hashfunction h;/* Secure hash function */
+const XOR:Function;/* XOR operation */
+const Concat: Function;/*Concatenation Function */
+const enforce:Function;
+const Fresh: Function;
+const Getrole:Function;
+const GetCapability:Function;
+const GetPermission:Function;
+const Getpriority:Function;
+secret SKa,Resp;
+const cxt,c;
+macro Rol= Getrole(IDa,cxt);
+macro Cap=GetCapability(Rol);
+macro Per=GetPermission(Cap);
+macro resp=enforce(Rol,c);
+protocol AccessRequest (Da,GW){
+role Da{
+fresh T1:Nonce;
+var T2:Nonce; 
+const IDa;
+macro Rq=Concat(IDa,cxt,c);
+macro M=XOR(Rq,h(SKa)); 
+send_1 (Da,GW,M,T1);
+recv_2(GW,Da,XOR(Concat(IDa,c,Resp),h(sk)),T2);
+claim(Da,Secret,SKa);
+claim(Da,Alive);
+claim(Da,Weakagree);
+claim(Da,Niagree);
+claim(Da,Nisynch);}
+role GW{
+fresh T2:Nonce; 
+var T1:Nonce; 
+const IDa;
+recv_1(Da,GW,M,T1);
+send_2 (GW,Da,XOR(Concat(IDa,c,Resp),h(sk)),T2);
+claim(GW,Alive);
+claim(GW,Weakagree);
+claim(GW,Niagree);
+claim(GW,Nisynch);
+claim(GW,Secret,SKa);}
+  }

@@ -1,0 +1,45 @@
+hashfunction h; /* Secure hash function */
+secret XOR:Function; /* XOR operation */
+const Concat: Function; /*Concatenation Function */
+const Fresh: Function;
+const Con:Function;
+const getRoles:Function;
+const getcapabilities:Function;
+const sub:Function;
+const enforce:Function;
+const rgb,ctxa,ctxb,IDb,c';
+macro Resp = enforce(rgb,c');
+secret SKa;
+protocol CapabilityRevoke (Da, GW) 
+{
+role Da {
+    fresh T1:Nonce;
+    var T2:Nonce; const IDa;
+    macro M=XOR(Concat(IDa,ctxa,c',IDb,ctxb,T1),h(SKa));
+    send_1 (Da, GW, M);
+    recv_2(GW, Da, XOR(Concat(IDa,Resp),h(SKa)),T2);
+    claim(Da, Secret, SKa);
+    claim(Da, Alive);
+    claim(Da, Weakagree);
+    claim(Da, Niagree);
+    claim(Da, Nisynch);
+}
+role GW {
+    fresh T2:Nonce; 
+    var T1:Nonce; 
+    secret IDa;
+    recv_1(Da, GW, M);
+    macro M' = XOR(M,h(SKa));
+    macro rgb=getRoles(IDb,ctxb);
+    macro rga=getRoles(IDa,ctxa);
+    macro ver = Roleheirarchy(rgb,rga);
+    macro Cb= getCapabilities(rgb);
+    macro rgb =sub(rgb,c');
+    send_2 (GW, Da, XOR(Concat(IDa,Resp),h(SKa)),T2);
+    claim(GW, Alive);
+    claim(GW, Weakagree);
+    claim(GW, Niagree);
+    claim(GW, Nisynch);
+    claim(GW, Secret, SKa);
+} 
+}

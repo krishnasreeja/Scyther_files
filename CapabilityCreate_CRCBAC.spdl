@@ -1,0 +1,58 @@
+hashfunction H;/* Secure hash function */
+secret XOR:Function;/* XOR operation */
+const Concat: Function;/*Concatenation Function */
+const Fresh: Function;
+const getRoles:Function;
+const getCapabilities:Function;
+const union:Function;
+const Roleheirarchy:Function;
+const enforce:Function;
+const GetPermission:Function;
+const rga,rgb,c',ctxa,ctxb; 
+const IDa,IDb; 
+secret SKa,SKb,Resp;
+protocol CreateCapability (Da, Db, GW)
+{	macro Ma'=XOR(Concat(IDa,rga,c',Resp),H(SKa));
+	macro Mb'=XOR(Concat(Ma',IDb,rgb,c',Resp),H(SKb));
+    role Da  {
+        fresh T1:Nonce;      var T4:Nonce;
+       	macro Ma = XOR(Concat(IDa,c',ctxa),H(SKa));
+        send_1 (Da, Db, Ma);
+	recv_4(Db, Da, Ma', T4);
+        claim(Da, Alive);claim(Da, Nisynch);
+        claim(Da, Weakagree);claim(Da, Niagree);
+        claim(Da, Commit, Db, Resp);
+        claim(Da, Secret, SKa); }
+    role Db   {    
+        fresh T2,T4 :Nonce;     var T1, T3: Nonce;
+        recv_1(Da, Db, Ma);
+	macro Mb=XOR(Concat(Ma,IDb,ctxb,T2),H(SKb));
+        send_2 (Db, GW, Mb);
+        recv_3(GW, Db,  Mb', T3);
+	send_4(Db, Da, Ma', T4);
+	claim(Db, Alive);
+        claim(Db, Weakagree);
+        claim(Db, Niagree);
+        claim(Db, Nisynch);
+	claim(Db, Commit, GW, Resp);
+        claim(Db, Secret, SKb);   }
+   role GW  {
+        fresh T3:Nonce;
+        var T2:Nonce;var Ma,Mb;
+        recv_2(Db, GW,  Mb);
+	macro Ma''=XOR(Ma,H(SKa));
+	match(XOR(Ma',H(SKa)),Ma);
+	macro Mb''=XOR(Mb,H(SKb));
+	match(XOR(Mb',H(SKb)),Mb);
+	macro rgb=getRoles(IDb,ctxb);
+	macro rga=getRoles(IDa,ctxa);
+	macro ver = Roleheirarchy(rgb,rga);
+	macro Cb= getCapabilities(rgb);
+	macro Per=GetPermission(rga);
+	macro rga = union(rga,c');
+	macro Resp=enforce(rga,c');
+	send_3(GW, Db,  Mb', T3);
+	claim(GW, Alive);  claim(GW, Niagree);
+        claim(GW, Weakagree);claim(GW, Secret, SKb);
+       claim(GW, Nisynch);claim(GW, Secret, SKa);    }
+}
